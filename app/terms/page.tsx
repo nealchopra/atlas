@@ -25,8 +25,8 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing and using Enhanced Research Paper Assistant ("the
-              Service"), you agree to be bound by these Terms of Service. If you
+              By accessing and using Enhanced Research Paper Assistant (&ldquo;the
+              Service&rdquo;), you agree to be bound by these Terms of Service. If you
               do not agree to these terms, please do not use the Service.
             </p>
           </section>
@@ -99,7 +99,7 @@ export default function TermsPage() {
               6. Limitation of Liability
             </h2>
             <p>
-              The Service is provided "as is" without warranties of any kind. We
+              The Service is provided &ldquo;as is&rdquo; without warranties of any kind. We
               are not responsible for any errors or omissions in the content or
               functionality of the Service.
             </p>
