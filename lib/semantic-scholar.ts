@@ -1,20 +1,9 @@
 import { Paper } from "@/types/paper";
 
-const API_BASE_URL = "https://api.semanticscholar.org/graph/v1";
-
 export async function searchPapers(query: string): Promise<Paper[]> {
-  const params = new URLSearchParams({
-    query,
-    limit: "10",
-    fields:
-      "paperId,title,abstract,authors,year,citationCount,url,venue,publicationDate,fieldsOfStudy",
-  });
+  const params = new URLSearchParams({ query });
 
-  const response = await fetch(`${API_BASE_URL}/paper/search?${params}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetch(`/api/papers/search?${params}`);
 
   if (!response.ok) {
     throw new Error(`Failed to search papers: ${response.statusText}`);
@@ -41,16 +30,7 @@ export async function searchPapers(query: string): Promise<Paper[]> {
 }
 
 export async function getPaperDetails(paperId: string): Promise<Paper> {
-  const params = new URLSearchParams({
-    fields:
-      "paperId,title,abstract,authors,year,citationCount,url,venue,publicationDate,fieldsOfStudy",
-  });
-
-  const response = await fetch(`${API_BASE_URL}/paper/${paperId}?${params}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetch(`/api/papers/${paperId}`);
 
   if (!response.ok) {
     throw new Error(`Failed to get paper details: ${response.statusText}`);
