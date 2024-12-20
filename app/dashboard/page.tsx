@@ -21,6 +21,9 @@ import { useState } from "react";
 import { PaperCard } from "@/components/paper-card";
 import { searchPapers } from "@/lib/semantic-scholar";
 import { Paper } from "@/types/paper";
+import { PaperAnalysisModal } from "@/components/paper-analysis-modal";
+import { analyzePaper } from "@/lib/openai";
+import { PaperAnalysis } from "@/lib/openai";
 
 export default function Page() {
   const [searchText, setSearchText] = useState("");
@@ -28,6 +31,12 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  //button state
+  const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  const [analyzingPaperId, setAnalyzingPaperId] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<PaperAnalysis | null>(null);
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
@@ -44,6 +53,23 @@ export default function Page() {
       console.error("Search error:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAIAnalysis = async (paper: Paper) => {
+    setSelectedPaper(paper);
+    setAnalyzingPaperId(paper.paperId);
+    setAnalysis(null);
+
+    try {
+      const result = await analyzePaper(paper);
+      setAnalysis(result);
+      setIsAnalysisOpen(true);
+    } catch (err) {
+      console.error("Analysis error:", err);
+      setError("Failed to analyze paper. Please try again.");
+    } finally {
+      setAnalyzingPaperId(null);
     }
   };
 
@@ -150,9 +176,8 @@ export default function Page() {
                         abstract={paper.abstract || ""}
                         year={paper.year || 0}
                         citationCount={paper.citationCount}
-                        onAIClick={() => {
-                          console.log("AI analysis clicked for:", paper.title);
-                        }}
+                        onAIClick={() => handleAIAnalysis(paper)}
+                        isAnalyzing={analyzingPaperId === paper.paperId}
                       />
                     ))}
                   </div>
@@ -162,6 +187,16 @@ export default function Page() {
           )}
         </div>
       </SidebarInset>
+
+      {selectedPaper && (
+        <PaperAnalysisModal
+          paper={selectedPaper}
+          isOpen={isAnalysisOpen}
+          onOpenChange={setIsAnalysisOpen}
+          analysis={analysis}
+          isLoading={false}
+        />
+      )}
     </SidebarProvider>
   );
 }

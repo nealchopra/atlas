@@ -9,17 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-interface Author {
-  name: string;
-}
+import { Author } from "@/types/paper";
 
 interface PaperCardProps {
   title: string;
@@ -28,6 +25,7 @@ interface PaperCardProps {
   year: number;
   citationCount: number;
   onAIClick: () => void;
+  isAnalyzing?: boolean;
 }
 
 export function PaperCard({
@@ -37,6 +35,7 @@ export function PaperCard({
   year,
   citationCount,
   onAIClick,
+  isAnalyzing = false,
 }: PaperCardProps) {
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -96,9 +95,24 @@ export function PaperCard({
             )}
           </div>
         </TooltipProvider>
-        <Button variant="outline" size="sm" onClick={onAIClick}>
-          Analyze
-          <Sparkles className="ml-1 h-4 w-4" />
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8"
+          onClick={onAIClick}
+          disabled={isAnalyzing}
+        >
+          {isAnalyzing ? (
+            <>
+              Analyzing...
+              <Loader2 className="ml-1 h-3.5 w-3.5 animate-spin" />
+            </>
+          ) : (
+            <>
+              Analyze
+              <Sparkles className="ml-1 h-3.5 w-3.5" />
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>
