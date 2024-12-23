@@ -2,7 +2,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms of service for Enhanced Research Paper Assistant",
+  description: "Terms of service for Atlas",
 };
 
 export default function TermsPage() {
@@ -25,7 +25,7 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing and using Enhanced Research Paper Assistant (&ldquo;the
+              By accessing and using Atlas (&ldquo;the
               Service&rdquo;), you agree to be bound by these Terms of Service. If you
               do not agree to these terms, please do not use the Service.
             </p>
@@ -36,7 +36,7 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p>
-              Enhanced Research Paper Assistant provides research paper analysis
+              Atlas provides research paper analysis
               and organization tools, including but not limited to:
             </p>
             <ul className="list-disc pl-6 mb-4">
@@ -71,7 +71,7 @@ export default function TermsPage() {
             </h2>
             <p>
               The Service and its original content, features, and functionality
-              are owned by Enhanced Research Paper Assistant and are protected
+              are owned by Atlas and are protected
               by international copyright, trademark, and other intellectual
               property laws.
             </p>
@@ -119,7 +119,7 @@ export default function TermsPage() {
               8. Contact Information
             </h2>
             <p>
-              For any questions about these Terms, please contact us at
+              For any questions about these Terms, please contact me at
               neal.28@dartmouth.edu
             </p>
           </section>

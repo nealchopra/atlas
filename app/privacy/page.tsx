@@ -2,7 +2,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Privacy policy for Enhanced Research Paper Assistant",
+  description: "Privacy policy for Atlas",
 };
 
 export default function PrivacyPage() {
@@ -55,7 +55,6 @@ export default function PrivacyPage() {
             <p>We integrate with the following third-party services:</p>
             <ul className="list-disc pl-6 mb-4">
               <li>Semantic Scholar API - for paper search and metadata</li>
-              <li>ArXiv API - for paper access and retrieval</li>
               <li>OpenAI API - for AI-powered analysis and summaries</li>
               <li>Notion API - for data organization and storage</li>
             </ul>
@@ -113,7 +112,7 @@ export default function PrivacyPage() {
             </h2>
             <p>
               For any questions about this Privacy Policy or our data practices,
-              please contact us at neal.28@dartmouth.edu
+              please contact me at neal.28@dartmouth.edu
             </p>
           </section>
         </div>
