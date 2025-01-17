@@ -17,8 +17,56 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { supabase } from "@/lib/supabase"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      try {
+        // Check for hash fragment
+        if (window.location.hash) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1))
+          const accessToken = hashParams.get('access_token')
+          
+          if (accessToken) {
+            console.log('Found access token in URL, setting session...')
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: hashParams.get('refresh_token') || '',
+            })
+
+            if (error) {
+              console.error('Error setting session:', error)
+              return
+            }
+
+            // Clear the hash fragment
+            window.location.hash = ''
+            
+            console.log('Session set, redirecting to dashboard...')
+            router.push('/dashboard')
+            return
+          }
+        }
+
+        // If no hash, check for existing session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (session) {
+          console.log('Existing session found, redirecting to dashboard...')
+          router.push('/dashboard')
+        }
+      } catch (err) {
+        console.error('Error handling auth callback:', err)
+      }
+    }
+
+    handleAuthCallback()
+  }, [router])
+
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <LoginForm />
@@ -30,6 +78,33 @@ function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const handleNotionLogin = async () => {
+    console.log('Starting Notion login...')
+    console.log('Window location:', {
+      origin: window.location.origin,
+      href: window.location.href,
+      host: window.location.host
+    })
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'notion',
+        options: {
+          redirectTo: `${window.location.origin}/login`,
+          scopes: 'users.read'
+        }
+      })
+
+      console.log('Supabase OAuth response:', { data, error })
+
+      if (error) {
+        console.error('Error logging in with Notion:', error.message)
+      }
+    } catch (err) {
+      console.error('Exception during login:', err)
+    }
+  }
+
   return (
     <div className={cn("flex flex-col gap-6 w-full max-w-sm", className)} {...props}>
       <Card>
@@ -44,10 +119,7 @@ function LoginForm({
             <Button
               variant="outline"
               className="w-full flex items-center justify-center gap-2 relative"
-              onClick={() => {
-                //auth with notion logic here
-                console.log("Notion login clicked")
-              }}
+              onClick={handleNotionLogin}
             >
               Continue with Notion
               <Image
