@@ -22,13 +22,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 
 const data = {
-  user: {
-    name: "User",
-    email: "user@example.com",
-    avatar: "/avatars/default.jpg",
-  },
   navMain: [
     {
       title: "Find a paper",
@@ -105,6 +102,46 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    avatar: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (session?.user) {
+        const userData = session.user;
+        setUser({
+          name: userData.user_metadata.full_name || userData.email?.split('@')[0] || 'User',
+          email: userData.email || '',
+          avatar: userData.user_metadata.avatar_url || '/avatars/default.jpg'
+        });
+      }
+    };
+
+    getUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const userData = session.user;
+        setUser({
+          name: userData.user_metadata.full_name || userData.email?.split('@')[0] || 'User',
+          email: userData.email || '',
+          avatar: userData.user_metadata.avatar_url || '/avatars/default.jpg'
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -130,7 +167,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {user && <NavUser user={user} />}
       </SidebarFooter>
     </Sidebar>
   );
