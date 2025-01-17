@@ -18,15 +18,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { supabase } from "@/lib/supabase"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        setIsLoading(true)
         // Check for hash fragment
         if (window.location.hash) {
           const hashParams = new URLSearchParams(window.location.hash.substring(1))
@@ -61,11 +63,21 @@ export default function LoginPage() {
         }
       } catch (err) {
         console.error('Error handling auth callback:', err)
+      } finally {
+        setIsLoading(false)
       }
     }
 
     handleAuthCallback()
   }, [router])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
