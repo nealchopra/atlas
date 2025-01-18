@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Eye } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -26,6 +26,7 @@ interface PaperCardProps {
   citationCount: number;
   onAIClick: () => void;
   isAnalyzing?: boolean;
+  hasExistingAnalysis?: boolean;
 }
 
 export function PaperCard({
@@ -36,6 +37,7 @@ export function PaperCard({
   citationCount,
   onAIClick,
   isAnalyzing = false,
+  hasExistingAnalysis = false,
 }: PaperCardProps) {
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -104,8 +106,13 @@ export function PaperCard({
         >
           {isAnalyzing ? (
             <>
-              Analyzing...
+              {hasExistingAnalysis ? "Viewing analysis" : "Analyzing"}
               <Loader2 className="ml-1 h-3.5 w-3.5 animate-spin" />
+            </>
+          ) : hasExistingAnalysis ? (
+            <>
+              View analysis
+              <Eye className="ml-1 h-3.5 w-3.5" />
             </>
           ) : (
             <>

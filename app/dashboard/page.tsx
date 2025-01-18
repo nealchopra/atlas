@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PaperCard } from "@/components/paper-card";
 import { searchPapers } from "@/lib/semantic-scholar";
 import { Paper } from "@/types/paper";
@@ -25,6 +25,8 @@ import { PaperAnalysisModal } from "@/components/paper-analysis-modal";
 import { analyzePaper } from "@/lib/openai";
 import { PaperAnalysis } from "@/lib/openai";
 import ProtectedRoute from "@/components/protected-route";
+import { supabase } from "@/lib/supabase";
+import { createPaperAnalysis, getPaperAnalysis } from "@/lib/paper-analysis";
 
 export default function Page() {
   const [searchText, setSearchText] = useState("");
@@ -32,12 +34,24 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  //button state
+  // button state
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [analyzingPaperId, setAnalyzingPaperId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<PaperAnalysis | null>(null);
+  const [analyzedPapers, setAnalyzedPapers] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserId(session.user.id);
+      }
+    };
+    checkUser();
+  }, []);
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
@@ -49,6 +63,20 @@ export default function Page() {
     try {
       const results = await searchPapers(searchText);
       setPapers(results);
+
+      // Check which papers have existing analyses
+      if (userId) {
+        const analyzedSet = new Set<string>();
+        await Promise.all(
+          results.map(async (paper) => {
+            const existingAnalysis = await getPaperAnalysis(paper.paperId, userId);
+            if (existingAnalysis) {
+              analyzedSet.add(paper.paperId);
+            }
+          })
+        );
+        setAnalyzedPapers(analyzedSet);
+      }
     } catch (err) {
       setError("Failed to search papers. Please try again.");
       console.error("Search error:", err);
@@ -58,17 +86,50 @@ export default function Page() {
   };
 
   const handleAIAnalysis = async (paper: Paper) => {
+    if (!userId) return;
+
     setSelectedPaper(paper);
     setAnalyzingPaperId(paper.paperId);
     setAnalysis(null);
+    setError(null);
 
     try {
-      const result = await analyzePaper(paper);
-      setAnalysis(result);
-      setIsAnalysisOpen(true);
+      // Check for existing analysis first
+      const existingAnalysis = await getPaperAnalysis(paper.paperId, userId);
+      
+      if (existingAnalysis) {
+        console.log('Found existing analysis:', existingAnalysis);
+        setAnalysis(existingAnalysis.analysis);
+        setIsAnalysisOpen(true);
+      } else {
+        // Generate new analysis
+        const result = await analyzePaper(paper);
+        
+        // Save to database first
+        const savedAnalysis = await createPaperAnalysis({
+          paper_id: paper.paperId,
+          user_id: userId,
+          analysis: result,
+        });
+
+        if (savedAnalysis) {
+          console.log('Successfully saved analysis:', savedAnalysis);
+          setAnalysis(result);
+          // Update analyzed papers set
+          setAnalyzedPapers(prev => {
+            const newSet = new Set(prev);
+            newSet.add(paper.paperId);
+            return newSet;
+          });
+          setIsAnalysisOpen(true);
+        } else {
+          throw new Error('Failed to save analysis to database');
+        }
+      }
     } catch (err) {
       console.error("Analysis error:", err);
       setError("Failed to analyze paper. Please try again.");
+      setIsAnalysisOpen(false);
     } finally {
       setAnalyzingPaperId(null);
     }
@@ -180,6 +241,7 @@ export default function Page() {
                           citationCount={paper.citationCount}
                           onAIClick={() => handleAIAnalysis(paper)}
                           isAnalyzing={analyzingPaperId === paper.paperId}
+                          hasExistingAnalysis={analyzedPapers.has(paper.paperId)}
                         />
                       ))}
                     </div>
@@ -196,7 +258,7 @@ export default function Page() {
             isOpen={isAnalysisOpen}
             onOpenChange={setIsAnalysisOpen}
             analysis={analysis}
-            isLoading={false}
+            isLoading={analyzingPaperId === selectedPaper.paperId}
           />
         )}
       </SidebarProvider>
