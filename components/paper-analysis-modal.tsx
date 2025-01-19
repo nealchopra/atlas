@@ -11,7 +11,7 @@ import { Loader2, ChevronLeft, Plus, Grid2X2Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { listNotionDatabases, addPaperToDatabase, createNotionDatabase } from "@/lib/notion";
 
 // Define tag colors using Tailwind color combinations
 const TAG_COLORS = [
@@ -59,27 +60,29 @@ const ANALYSIS_SECTIONS: AnalysisSection[] = [
 
 type ModalView = "analysis" | "notion";
 
-// Add mock data for demonstration
-const MOCK_DATABASES = [
-  {
-    id: 1,
-    title: "Research Papers",
-    items: ["Papers", "Articles", "Studies"],
-    count: 45,
-  },
-  {
-    id: 2,
-    title: "Reading List",
-    items: ["Books", "Papers", "Notes"],
-    count: 23,
-  },
-  {
-    id: 3,
-    title: "Literature Review",
-    items: ["Reviews", "Summaries"],
-    count: 12,
-  },
-];
+interface NotionDatabase {
+  id: string;
+  title: string;
+  properties: Record<string, any>;
+}
+
+interface NotionDatabaseResponse {
+  id: string;
+  title: Array<{
+    plain_text: string;
+  }>;
+  properties: Record<string, any>;
+  parent?: {
+    page_id?: string;
+  };
+}
+
+interface NotionWorkspace {
+  pages: {
+    id: string;
+    title: string;
+  }[];
+}
 
 export function PaperAnalysisModal({
   paper,
@@ -89,6 +92,82 @@ export function PaperAnalysisModal({
   isLoading,
 }: PaperAnalysisModalProps) {
   const [view, setView] = useState<ModalView>("analysis");
+  const [databases, setDatabases] = useState<NotionDatabase[]>([]);
+  const [selectedDatabases, setSelectedDatabases] = useState<Set<string>>(new Set());
+  const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
+  const [isAddingToDatabases, setIsAddingToDatabases] = useState(false);
+  const [selectedPageId, setSelectedPageId] = useState<string>("");
+
+  useEffect(() => {
+    if (view === "notion") {
+      fetchDatabases();
+    }
+  }, [view]);
+
+  const fetchDatabases = async () => {
+    setIsLoadingDatabases(true);
+    try {
+      const results = await listNotionDatabases();
+      const formattedDatabases = results.map((db: NotionDatabaseResponse) => ({
+        id: db.id,
+        title: db.title[0]?.plain_text || "Untitled",
+        properties: db.properties
+      }));
+      setDatabases(formattedDatabases);
+
+      // Set the first page as selected if we have one
+      if (results.length > 0 && results[0].parent?.page_id) {
+        setSelectedPageId(results[0].parent.page_id);
+      }
+    } catch (error) {
+      console.error("Error fetching databases:", error);
+    } finally {
+      setIsLoadingDatabases(false);
+    }
+  };
+
+  const handleDatabaseSelect = (dbId: string) => {
+    setSelectedDatabases(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dbId)) {
+        newSet.delete(dbId);
+      } else {
+        newSet.add(dbId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddToDatabases = async () => {
+    if (selectedDatabases.size === 0 || !analysis) return;
+
+    setIsAddingToDatabases(true);
+    try {
+      const promises = Array.from(selectedDatabases).map(dbId =>
+        addPaperToDatabase(dbId, paper, analysis)
+      );
+      await Promise.all(promises);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error adding to databases:", error);
+    } finally {
+      setIsAddingToDatabases(false);
+    }
+  };
+
+  const handleCreateDatabase = async () => {
+    if (!selectedPageId) {
+      console.error("No page selected for creating database");
+      return;
+    }
+
+    try {
+      await createNotionDatabase("Research Papers", selectedPageId);
+      await fetchDatabases();
+    } catch (error) {
+      console.error("Error creating database:", error);
+    }
+  };
 
   const renderContent = (
     section: AnalysisSection,
@@ -179,49 +258,74 @@ export function PaperAnalysisModal({
 
       <ScrollArea className="px-6 h-[600px]">
         <div className="space-y-6 pb-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Headers</TableHead>
-                <TableHead>Items</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {MOCK_DATABASES.map((db) => (
-                <TableRow key={db.id}>
-                  <TableCell className="flex items-center justify-center">
-                    <Checkbox />
-                  </TableCell>
-                  <TableCell className="font-medium">{db.title}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {db.items.join(", ")}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {db.count}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Button className="w-full" variant="outline">
-            Create a new database
-            <Grid2X2Plus className="h-4 w-4" />
-          </Button>
+          {isLoadingDatabases ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Properties</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {databases.map((db) => (
+                    <TableRow key={db.id}>
+                      <TableCell className="flex items-center justify-center">
+                        <Checkbox 
+                          checked={selectedDatabases.has(db.id)}
+                          onCheckedChange={() => handleDatabaseSelect(db.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{db.title}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {Object.keys(db.properties).join(", ")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={handleCreateDatabase}
+              >
+                Create a new database
+                <Grid2X2Plus className="h-4 w-4 ml-2" />
+              </Button>
+            </>
+          )}
         </div>
       </ScrollArea>
 
       <DialogFooter className="px-6 py-4">
-        <Button variant="outline" className="gap-2">
-          Add to selected databases
-          <Image
-            src="/notion.svg"
-            alt="Notion"
-            width={16}
-            height={16}
-            className="opacity-70"
-          />
+        <Button 
+          variant="outline" 
+          className="gap-2"
+          disabled={selectedDatabases.size === 0 || isAddingToDatabases}
+          onClick={handleAddToDatabases}
+        >
+          {isAddingToDatabases ? (
+            <>
+              Adding to databases
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </>
+          ) : (
+            <>
+              Add to selected databases
+              <Image
+                src="/notion.svg"
+                alt="Notion"
+                width={16}
+                height={16}
+                className="opacity-70"
+              />
+            </>
+          )}
         </Button>
       </DialogFooter>
     </>
