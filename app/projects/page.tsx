@@ -21,6 +21,7 @@ import {
   MoreVertical,
   GraduationCap,
   Code,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -59,7 +60,7 @@ export default function Page() {
               <div className="space-y-8">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">
+                    <h1 className="text-2xl font-semibold tracking-tight mb-1">
                       Projects
                     </h1>
                     <p className="text-sm text-muted-foreground">
@@ -68,13 +69,30 @@ export default function Page() {
                   </div>
                   <CreateProjectDialog />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {isLoading ? (
-                    <p>Loading projects...</p>
-                  ) : projects?.length === 0 ? (
-                    <p>No projects yet. Create your first project to get started.</p>
-                  ) : (
-                    projects?.map((project) => (
+                {isLoading ? (
+                  <div className="flex justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : projects?.length === 0 ? (
+                  <div className="border border-dashed border-muted-foreground/20 rounded-lg py-12">
+                    <div className="flex flex-col items-center gap-4 px-4">
+                      <div className="bg-muted/50 p-4 rounded-2xl">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-medium mb-1">
+                          You have no projects yet!
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Create your first project to start organizing your
+                          research.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-4">
+                    {projects?.map((project) => (
                       <Card key={project.id} className="flex flex-col p-4">
                         <div className="flex items-start justify-between">
                           <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -112,15 +130,11 @@ export default function Page() {
                               {project.description}
                             </p>
                           )}
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Last updated{" "}
-                            {new Date(project.updated_at).toLocaleDateString()}
-                          </p>
                         </div>
                       </Card>
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
