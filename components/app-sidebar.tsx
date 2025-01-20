@@ -7,6 +7,7 @@ import {
   Globe,
   FolderKanban,
   Folder,
+  Clock,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -38,13 +39,10 @@ const data = {
       url: "/projects",
       icon: Folder,
     },
-  ],
-  navSecondary: [],
-  projects: [
     {
-      name: "Recent papers",
-      url: "#",
-      icon: BookOpen,
+      title: "Recents",
+      url: "/recents",
+      icon: Clock,
     },
   ],
 };
@@ -58,13 +56,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (session?.user) {
         const userData = session.user;
         setUser({
-          name: userData.user_metadata.full_name || userData.email?.split('@')[0] || 'User',
-          email: userData.email || '',
-          avatar: userData.user_metadata.avatar_url || '/avatars/default.jpg'
+          name:
+            userData.user_metadata.full_name ||
+            userData.email?.split("@")[0] ||
+            "User",
+          email: userData.email || "",
+          avatar: userData.user_metadata.avatar_url || "/avatars/default.jpg",
         });
       }
     };
@@ -72,13 +76,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     getUser();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const userData = session.user;
         setUser({
-          name: userData.user_metadata.full_name || userData.email?.split('@')[0] || 'User',
-          email: userData.email || '',
-          avatar: userData.user_metadata.avatar_url || '/avatars/default.jpg'
+          name:
+            userData.user_metadata.full_name ||
+            userData.email?.split("@")[0] ||
+            "User",
+          email: userData.email || "",
+          avatar: userData.user_metadata.avatar_url || "/avatars/default.jpg",
         });
       } else {
         setUser(null);
@@ -96,27 +105,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="flex items-center gap-2 hover:bg-transparent">
+                <div className="flex aspect-square size-7 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Globe className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-lg leading-tight">
                   <span className="truncate font-semibold">Atlas</span>
-                  <span className="truncate text-xs">Research Assistant</span>
                 </div>
-              </a>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      <SidebarFooter>
-        {user && <NavUser user={user} />}
-      </SidebarFooter>
+      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
     </Sidebar>
   );
 }

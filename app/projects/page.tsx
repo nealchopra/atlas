@@ -71,7 +71,7 @@ export default function Page() {
               <div className="space-y-8">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-2xl font-semibold tracking-tight mb-1">
+                    <h1 className="text-2xl font-semibold tracking-tight">
                       Projects
                     </h1>
                     <p className="text-sm text-muted-foreground">
