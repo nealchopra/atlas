@@ -4,9 +4,9 @@ import * as React from "react";
 import {
   BookOpen,
   Command,
-  Frame,
   Globe,
-  PieChart,
+  FolderKanban,
+  Folder,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -19,8 +19,8 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
@@ -28,62 +28,15 @@ import { useEffect, useState } from "react";
 const data = {
   navMain: [
     {
-      title: "Find a paper",
-      url: "#",
+      title: "Search",
+      url: "/dashboard",
       icon: Command,
       isActive: true,
-      items: [
-        {
-          title: "Search",
-          url: "#",
-        },
-        {
-          title: "Recent searches",
-          url: "#",
-        },
-        {
-          title: "Advanced search",
-          url: "#",
-        },
-      ],
     },
     {
-      title: "My library",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Saved papers",
-          url: "#",
-        },
-        {
-          title: "Collections",
-          url: "#",
-        },
-        {
-          title: "Reading list",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Research tools",
-      url: "#",
-      icon: Frame,
-      items: [
-        {
-          title: "Citation manager",
-          url: "#",
-        },
-        {
-          title: "PDF reader",
-          url: "#",
-        },
-        {
-          title: "Note taking",
-          url: "#",
-        },
-      ],
+      title: "Projects",
+      url: "/projects",
+      icon: Folder,
     },
   ],
   navSecondary: [],
@@ -92,11 +45,6 @@ const data = {
       name: "Recent papers",
       url: "#",
       icon: BookOpen,
-    },
-    {
-      name: "Cited papers",
-      url: "#",
-      icon: PieChart,
     },
   ],
 };
