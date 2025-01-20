@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Paper } from "@/types/paper";
 import { PaperAnalysis } from "@/lib/openai";
-import { Loader2, X, Check } from "lucide-react";
+import { Loader2, Check, Grid2x2Plus, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -199,12 +199,15 @@ export function PaperAnalysisModal({
           ) : null}
         </ScrollArea>
 
+        {/* gradient */}
+        <div className="h-16 -mt-20 relative z-10 pointer-events-none bg-gradient-to-t from-background to-transparent" />
+
         <DialogFooter className="px-6 py-4">
           {showAddToProject !== false && (
             <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="gap-2">
-                  Add to project
+                  Add to project <Grid2x2Plus className="h-4 w-4 ml-1" />
                   {selectedProjectId && (
                     <span className="text-indigo-600 text-xs font-normal bg-indigo-500/10 dark:bg-indigo-500/20 rounded-md px-2 py-1">
                       1
@@ -220,27 +223,42 @@ export function PaperAnalysisModal({
                 </div>
                 <ScrollArea className="h-40">
                   <div className="p-2">
-                    {projects?.map((project) => {
-                      const isSelected = selectedProjectId === project.id;
-                      return (
-                        <button
-                          key={project.id}
-                          onClick={() => handleProjectClick(project.id)}
-                          disabled={updatingProject}
-                          className={cn(
-                            "relative flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors duration-300 hover:bg-accent hover:text-accent-foreground",
-                            isSelected && "bg-accent/50"
-                          )}
-                        >
-                          <span>{project.title}</span>
-                          {updatingProject && selectedProjectId === project.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : isSelected ? (
-                            <Check className="h-4 w-4" />
-                          ) : null}
-                        </button>
-                      );
-                    })}
+                    {projects?.length === 0 ? (
+                      <div className="flex flex-col items-center gap-2 py-4 px-2">
+                        <div className="bg-muted/50 p-3 rounded-xl">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium">No projects yet</p>
+                          <p className="text-xs text-muted-foreground">
+                            Create your first project to start organizing your research.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      projects?.map((project) => {
+                        const isSelected = selectedProjectId === project.id;
+                        return (
+                          <button
+                            key={project.id}
+                            onClick={() => handleProjectClick(project.id)}
+                            disabled={updatingProject}
+                            className={cn(
+                              "relative flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors duration-300 hover:bg-accent hover:text-accent-foreground",
+                              isSelected && "bg-accent/50"
+                            )}
+                          >
+                            <span>{project.title}</span>
+                            {updatingProject &&
+                            selectedProjectId === project.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isSelected ? (
+                              <Check className="h-4 w-4" />
+                            ) : null}
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 </ScrollArea>
               </PopoverContent>
