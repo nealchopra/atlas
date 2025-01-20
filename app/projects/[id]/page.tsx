@@ -26,10 +26,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Trash2, Loader2, FileText } from "lucide-react";
+import { Eye, Trash2, Loader2, FileText, Grid2x2Plus } from "lucide-react";
 import useSWR from "swr";
 import { getAuthHeader } from "@/lib/hooks/use-projects";
-import { useState } from "react";
+import { useState, use } from "react";
 import { PaperAnalysisModal } from "@/components/paper-analysis-modal";
 import { Paper } from "@/types/paper";
 import {
@@ -88,12 +88,13 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-export default function ProjectPage({ params }: { params: { id: string } }) {
+export default function ProjectPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  const resolvedParams = use(params as Promise<{ id: string }>);
   const {
     data: project,
     error,
     mutate,
-  } = useSWR<ProjectWithAnalyses>(`/api/projects/${params.id}`, fetcher);
+  } = useSWR<ProjectWithAnalyses>(`/api/projects/${resolvedParams.id}`, fetcher);
 
   const [selectedPaper, setSelectedPaper] = useState<PaperAnalysis | null>(
     null
@@ -191,14 +192,22 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           <div className="flex flex-1 flex-col gap-8 p-4 pt-16">
             <div className="mx-auto w-full max-w-5xl">
               <div className="space-y-8">
-                <div>
-                  <h1 className="text-2xl font-semibold tracking-tight">
-                    {project?.title || "Loading..."}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {project?.description ||
-                      "View and manage your literature reviews for this project."}
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-semibold tracking-tight">
+                      {project?.title || "Loading..."}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                      {project?.description ||
+                        "View and manage your literature reviews for this project."}
+                    </p>
+                  </div>
+                  <Button variant="default" asChild>
+                    <a href="/dashboard" className="flex items-center gap-2">
+                      Add analysis
+                      <Grid2x2Plus className="h-4 w-4" />
+                    </a>
+                  </Button>
                 </div>
                 {error ? (
                   <p>Error loading project data</p>
