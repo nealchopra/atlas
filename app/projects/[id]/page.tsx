@@ -26,7 +26,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Trash2, Loader2, FileText, Grid2x2Plus } from "lucide-react";
+import {
+  Eye,
+  Trash2,
+  Loader2,
+  FileText,
+  Grid2x2Plus,
+  Calendar1,
+  CaseSensitive,
+  Tag,
+  ListChecks,
+  Type,
+} from "lucide-react";
 import useSWR from "swr";
 import { getAuthHeader } from "@/lib/hooks/use-projects";
 import { useState, use } from "react";
@@ -88,13 +99,20 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-export default function ProjectPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+export default function ProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }> | { id: string };
+}) {
   const resolvedParams = use(params as Promise<{ id: string }>);
   const {
     data: project,
     error,
     mutate,
-  } = useSWR<ProjectWithAnalyses>(`/api/projects/${resolvedParams.id}`, fetcher);
+  } = useSWR<ProjectWithAnalyses>(
+    `/api/projects/${resolvedParams.id}`,
+    fetcher
+  );
 
   const [selectedPaper, setSelectedPaper] = useState<PaperAnalysis | null>(
     null
@@ -232,11 +250,22 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Authors</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Tags</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Title{" "}
+                          <Type className="inline-block h-5 w-5 ml-2 bg-muted/50 rounded-sm p-1" />
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Date added{" "}
+                          <Calendar1 className="inline-block h-5 w-5 ml-2 bg-muted/50 rounded-sm p-1" />
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Tags{" "}
+                          <Tag className="inline-block h-5 w-5 ml-2 bg-muted/50 rounded-sm p-1" />
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Actions{" "}
+                          <ListChecks className="inline-block h-5 w-5 ml-2 bg-muted/50 rounded-sm p-1" />
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -245,9 +274,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                           <TableCell className="font-medium">
                             {paper.title}
                           </TableCell>
-                          <TableCell>
-                            {paper.analysis.authors?.join(", ") || "N/A"}
-                          </TableCell>
+
                           <TableCell>
                             {new Date(paper.created_at).toLocaleDateString()}
                           </TableCell>

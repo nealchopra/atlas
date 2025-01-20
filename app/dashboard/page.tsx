@@ -45,7 +45,9 @@ export default function Page() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
         setUserId(session.user.id);
       }
@@ -69,7 +71,10 @@ export default function Page() {
         const analyzedSet = new Set<string>();
         await Promise.all(
           results.map(async (paper) => {
-            const existingAnalysis = await getPaperAnalysis(paper.paperId, userId);
+            const existingAnalysis = await getPaperAnalysis(
+              paper.paperId,
+              userId
+            );
             if (existingAnalysis) {
               analyzedSet.add(paper.paperId);
             }
@@ -96,43 +101,44 @@ export default function Page() {
     try {
       // Check for existing analysis first
       const existingAnalysis = await getPaperAnalysis(paper.paperId, userId);
-      
+
       if (existingAnalysis) {
-        console.log('Found existing analysis:', existingAnalysis);
+        console.log("Found existing analysis:", existingAnalysis);
         setAnalysis(existingAnalysis.analysis);
         setIsAnalysisOpen(true);
       } else {
         // Generate new analysis
         const result = await analyzePaper(paper);
-        
-        console.log('Paper data:', {
+
+        console.log("Paper data:", {
           paper_id: paper.paperId,
           user_id: userId,
           title: paper.title,
           authors: paper.authors,
           analysis: result,
         });
-        
+
         // Save to database first
         const savedAnalysis = await createPaperAnalysis({
           paper_id: paper.paperId,
           user_id: userId,
           title: paper.title,
           analysis: result,
+          project_id: null,
         });
 
         if (savedAnalysis) {
-          console.log('Successfully saved analysis:', savedAnalysis);
+          console.log("Successfully saved analysis:", savedAnalysis);
           setAnalysis(result);
           // Update analyzed papers set
-          setAnalyzedPapers(prev => {
+          setAnalyzedPapers((prev) => {
             const newSet = new Set(prev);
             newSet.add(paper.paperId);
             return newSet;
           });
           setIsAnalysisOpen(true);
         } else {
-          throw new Error('Failed to save analysis to database');
+          throw new Error("Failed to save analysis to database");
         }
       }
     } catch (err) {
@@ -250,7 +256,9 @@ export default function Page() {
                           citationCount={paper.citationCount}
                           onAIClick={() => handleAIAnalysis(paper)}
                           isAnalyzing={analyzingPaperId === paper.paperId}
-                          hasExistingAnalysis={analyzedPapers.has(paper.paperId)}
+                          hasExistingAnalysis={analyzedPapers.has(
+                            paper.paperId
+                          )}
                         />
                       ))}
                     </div>
