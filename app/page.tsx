@@ -8,8 +8,8 @@ export default function Home() {
       <main className="text-center px-4">
         <h1 className="text-4xl font-semibold tracking-tight mb-4 bg-gradient-to-r from-slate-800 to-gray-600 bg-clip-text text-transparent">Research, faster.</h1>
         <p className="text-lg mb-8 max-w-xl mx-auto tracking-tight text-muted-foreground font-medium">
-          Save papers to Notion and let AI handle the summarizing, organizing,
-          and connecting — all in one place.
+          Save and organize your research papers with AI-powered summaries, analysis,
+          and connections — all in one place.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Button variant="default" asChild>

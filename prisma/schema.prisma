@@ -14,20 +14,9 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   email         String?   @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  notionAuth    NotionAuth?
-}
-
-model NotionAuth {
-  id            String    @id @default(cuid())
-  accessToken   String
-  workspaceId   String
-  workspaceName String?
-  workspaceIcon String?
-  botId         String
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  githubId      String?   @unique
+  name          String?
+  avatarUrl     String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 } 
