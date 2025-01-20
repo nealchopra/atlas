@@ -27,10 +27,13 @@ import { PaperAnalysis } from "@/lib/openai";
 import ProtectedRoute from "@/components/protected-route";
 import { supabase } from "@/lib/supabase";
 import { createPaperAnalysis, getPaperAnalysis } from "@/lib/paper-analysis";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Page() {
-  const [searchText, setSearchText] = useState("");
-  const [hasSearched, setHasSearched] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [searchText, setSearchText] = useState(searchParams.get("q") || "");
+  const [hasSearched, setHasSearched] = useState(!!searchParams.get("q"));
   const [isLoading, setIsLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +76,11 @@ export default function Page() {
     setError(null);
     setHasSearched(true);
 
+    // Update URL with search query
+    const params = new URLSearchParams();
+    params.set("q", searchText.trim());
+    router.push(`/dashboard?${params.toString()}`);
+
     try {
       const results = await searchPapers(searchText);
       setPapers(results);
@@ -100,6 +108,14 @@ export default function Page() {
       setIsLoading(false);
     }
   };
+
+  // Add effect to perform search on initial load if query exists
+  useEffect(() => {
+    const query = searchParams.get("q");
+    if (query) {
+      handleSearch();
+    }
+  }, []); // Run only on mount
 
   const handleAIAnalysis = async (paper: Paper) => {
     if (!userId) return;
@@ -196,7 +212,7 @@ export default function Page() {
                     <Textarea
                       ref={textareaRef}
                       placeholder="e.g. What are the latest developments in quantum computing's impact on cryptography?"
-                      className="min-h-[120px] resize-none text-sm pr-12 pb-12"
+                      className="min-h-[120px] resize-none text-sm pr-12"
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
                       onKeyDown={(e) => {
