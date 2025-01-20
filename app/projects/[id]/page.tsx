@@ -27,25 +27,53 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Eye } from "lucide-react";
+import useSWR from "swr";
+import { getAuthHeader } from "@/lib/hooks/use-projects";
+
+interface PaperAnalysis {
+  id: string;
+  title: string;
+  analysis: {
+    authors?: string[];
+    tags?: string[];
+  };
+  created_at: string;
+}
+
+interface ProjectWithAnalyses {
+  id: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  paper_analyses: PaperAnalysis[];
+}
+
+const fetcher = async (url: string) => {
+  const authHeader = getAuthHeader();
+  if (!authHeader) throw new Error("No auth token");
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: authHeader,
+    },
+  });
+  
+  if (!res.ok) {
+    throw new Error("Failed to fetch");
+  }
+  
+  return res.json();
+};
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
-  // This would be replaced with actual data fetching
-  const mockPapers = [
-    {
-      id: "1",
-      title: "Deep Learning Approaches in AI",
-      authors: ["John Doe", "Jane Smith"],
-      date: "2024-03-20",
-      tags: ["AI", "Deep Learning", "Neural Networks"],
-    },
-    {
-      id: "2",
-      title: "The Future of Quantum Computing",
-      authors: ["Alice Johnson"],
-      date: "2024-03-18",
-      tags: ["Quantum", "Computing"],
-    },
-  ];
+  const { data: project, error } = useSWR<ProjectWithAnalyses>(
+    `/api/projects/${params.id}`,
+    fetcher
+  );
+
+  const isLoading = !project && !error;
 
   return (
     <ProtectedRoute>
@@ -63,7 +91,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>Project Name</BreadcrumbPage>
+                    <BreadcrumbPage>{project?.title || "Loading..."}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -74,50 +102,60 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
               <div className="space-y-8">
                 <div>
                   <h1 className="text-2xl font-semibold tracking-tight">
-                    Project Name
+                    {project?.title || "Loading..."}
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    View and manage your literature reviews for this project.
+                    {project?.description || "View and manage your literature reviews for this project."}
                   </p>
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Authors</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Tags</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockPapers.map((paper) => (
-                      <TableRow key={paper.id} className="hover:bg-transparent">
-                        <TableCell className="font-medium">
-                          {paper.title}
-                        </TableCell>
-                        <TableCell>{paper.authors.join(", ")}</TableCell>
-                        <TableCell>
-                          {new Date(paper.date).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1 flex-wrap">
-                            {paper.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="secondary" size="sm">
-                            View analysis
-                          </Button>
-                        </TableCell>
+                {isLoading ? (
+                  <p>Loading analyses...</p>
+                ) : error ? (
+                  <p>Error loading project data</p>
+                ) : project?.paper_analyses?.length === 0 ? (
+                  <p>No analyses yet. Add your first paper analysis to get started.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Authors</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Tags</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {project?.paper_analyses.map((paper) => (
+                        <TableRow key={paper.id}>
+                          <TableCell className="font-medium">
+                            {paper.title}
+                          </TableCell>
+                          <TableCell>
+                            {paper.analysis.authors?.join(", ") || "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(paper.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 flex-wrap">
+                              {paper.analysis.tags?.map((tag) => (
+                                <Badge key={tag} variant="secondary">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="secondary" size="sm">
+                              View analysis
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
             </div>
           </div>

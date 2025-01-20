@@ -14,14 +14,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import ProtectedRoute from "@/components/protected-route";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   FileText,
   MoreVertical,
   GraduationCap,
   Code,
-  Plus,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,8 +28,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CreateProjectDialog } from "@/components/create-project-dialog";
+import { useProjects } from "@/lib/hooks/use-projects";
+import type { Project } from "@/lib/hooks/use-projects";
+import Link from "next/link";
 
 export default function Page() {
+  const { projects, isLoading, deleteProject } = useProjects();
+
   return (
     <ProtectedRoute>
       <SidebarProvider>
@@ -61,107 +66,60 @@ export default function Page() {
                       Create and manage your research projects.
                     </p>
                   </div>
-                  <Button>
-                    Create new
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <CreateProjectDialog />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Card className="flex flex-col p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-primary" />
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View project</DropdownMenuItem>
-                          <DropdownMenuItem>Edit project</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Delete project
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="mt-4">
-                      <h3 className="font-semibold">CS10 Final</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Last updated 1 month ago
-                      </p>
-                    </div>
-                  </Card>
-
-                  <Card className="flex flex-col p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <GraduationCap className="h-4 w-4 text-primary" />
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View project</DropdownMenuItem>
-                          <DropdownMenuItem>Edit project</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Delete project
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="mt-4">
-                      <h3 className="font-semibold">CS10 Final</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Last updated 1 month ago
-                      </p>
-                    </div>
-                  </Card>
-
-                  <Card className="flex flex-col p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Code className="h-4 w-4 text-primary" />
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View project</DropdownMenuItem>
-                          <DropdownMenuItem>Edit project</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Delete project
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="mt-4">
-                      <h3 className="font-semibold">CS10 Final</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Last updated 1 month ago
-                      </p>
-                    </div>
-                  </Card>
+                  {isLoading ? (
+                    <p>Loading projects...</p>
+                  ) : projects?.length === 0 ? (
+                    <p>No projects yet. Create your first project to get started.</p>
+                  ) : (
+                    projects?.map((project) => (
+                      <Card key={project.id} className="flex flex-col p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <FileText className="h-4 w-4 text-primary" />
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={`/projects/${project.id}`}>
+                                  View project
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteProject(project.id)}
+                              >
+                                Delete project
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <div className="mt-4">
+                          <h3 className="font-semibold">{project.title}</h3>
+                          {project.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {project.description}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Last updated{" "}
+                            {new Date(project.updated_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
