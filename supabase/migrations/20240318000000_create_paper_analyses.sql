@@ -6,6 +6,7 @@ create table public.paper_analyses (
     id uuid default gen_random_uuid() primary key,
     paper_id text not null,
     user_id uuid not null references auth.users(id) on delete cascade,
+    title text not null,
     analysis jsonb not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null

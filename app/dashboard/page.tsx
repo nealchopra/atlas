@@ -105,10 +105,19 @@ export default function Page() {
         // Generate new analysis
         const result = await analyzePaper(paper);
         
+        console.log('Paper data:', {
+          paper_id: paper.paperId,
+          user_id: userId,
+          title: paper.title,
+          authors: paper.authors,
+          analysis: result,
+        });
+        
         // Save to database first
         const savedAnalysis = await createPaperAnalysis({
           paper_id: paper.paperId,
           user_id: userId,
+          title: paper.title,
           analysis: result,
         });
 

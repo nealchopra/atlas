@@ -4,6 +4,7 @@ export interface PaperAnalysisRecord {
     id: string;
     paper_id: string;
     user_id: string;
+    title: string;
     analysis: PaperAnalysis;
     created_at: string;
     updated_at: string;
