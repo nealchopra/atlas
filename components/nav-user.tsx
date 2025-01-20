@@ -112,11 +112,8 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleSignOut}
-              className="text-destructive hover:text-destructive"
-            >
-              <LogOut className="text-destructive" />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import ProtectedRoute from "@/components/protected-route";
 import { PaperCard } from "@/components/paper-card";
-import { Grid2x2Plus, Loader2 } from "lucide-react";
+import { FileText, Grid2x2Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { usePaperAnalyses } from "@/lib/hooks/use-paper-analyses";
 import { PaperAnalysisModal } from "@/components/paper-analysis-modal";
@@ -82,7 +82,10 @@ export default function Page() {
                   </div>
                 ) : analyses.length === 0 ? (
                   <div className="border border-dashed border-muted-foreground/20 rounded-lg py-12">
-                    <div className="flex flex-col items-center gap-4 px-4">
+                   <div className="flex flex-col items-center gap-4 px-4">
+                      <div className="bg-muted/50 p-4 rounded-2xl">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
                       <div className="text-center">
                         <p className="font-medium">No analyzed papers yet!</p>
                         <p className="text-sm text-muted-foreground">

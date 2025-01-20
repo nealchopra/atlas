@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PaperCard } from "@/components/paper-card";
 import { searchPapers } from "@/lib/semantic-scholar";
 import { Paper } from "@/types/paper";
@@ -43,6 +43,8 @@ export default function Page() {
   const [analysis, setAnalysis] = useState<PaperAnalysis | null>(null);
   const [analyzedPapers, setAnalyzedPapers] = useState<Set<string>>(new Set());
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -54,6 +56,15 @@ export default function Page() {
     };
     checkUser();
   }, []);
+
+  // Add auto-resize effect
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.max(120, textarea.scrollHeight)}px`;
+    }
+  }, [searchText]);
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
@@ -183,16 +194,27 @@ export default function Page() {
                 <div className="flex w-full max-w-xl flex-col items-center gap-4">
                   <div className="relative w-full">
                     <Textarea
+                      ref={textareaRef}
                       placeholder="e.g. What are the latest developments in quantum computing's impact on cryptography?"
-                      className="min-h-[120px] resize-none text-sm pr-12"
+                      className="min-h-[120px] resize-none text-sm pr-12 pb-12"
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && e.metaKey) {
+                        if (e.key === "Enter") {
+                          if (e.shiftKey) {
+                            return; // Allow default behavior (new line)
+                          }
+                          e.preventDefault(); // Prevent default enter behavior
                           handleSearch();
                         }
                       }}
                     />
+                    <span className="text-muted-foreground text-xs font-normal bg-muted/50 rounded-md px-2 py-1 absolute bottom-3 left-3">
+                      <span className="font-semibold">Enter</span> to search,{" "}
+                      <span className="font-semibold">Shift + Enter</span> to
+                      add a new line
+                    </span>
+
                     <Button
                       size="icon"
                       variant="secondary"

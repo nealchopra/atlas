@@ -145,7 +145,7 @@ export default function Page() {
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>
+                                    <AlertDialogCancel tabIndex={-1}>
                                       Cancel
                                     </AlertDialogCancel>
                                     <AlertDialogAction
