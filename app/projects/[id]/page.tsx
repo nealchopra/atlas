@@ -99,6 +99,31 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
+const TAG_COLORS = [
+  { bg: "bg-red-100", text: "text-red-700" },
+  { bg: "bg-blue-100", text: "text-blue-700" },
+  { bg: "bg-green-100", text: "text-green-700" },
+  { bg: "bg-yellow-100", text: "text-yellow-700" },
+  { bg: "bg-purple-100", text: "text-purple-700" },
+  { bg: "bg-pink-100", text: "text-pink-700" },
+  { bg: "bg-orange-100", text: "text-orange-700" },
+  { bg: "bg-indigo-100", text: "text-indigo-700" },
+];
+
+const getTagColor = (tag: string) => {
+  if (typeof window === "undefined") return TAG_COLORS[0];
+
+  const tagColors = JSON.parse(localStorage.getItem("tagColors") || "{}");
+
+  if (!tagColors[tag]) {
+    const randomColorIndex = Math.floor(Math.random() * TAG_COLORS.length);
+    tagColors[tag] = randomColorIndex;
+    localStorage.setItem("tagColors", JSON.stringify(tagColors));
+  }
+
+  return TAG_COLORS[tagColors[tag]];
+};
+
 export default function ProjectPage({
   params,
 }: {
@@ -280,11 +305,18 @@ export default function ProjectPage({
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1 flex-wrap">
-                              {paper.analysis.tags?.map((tag) => (
-                                <Badge key={tag} variant="secondary">
-                                  {tag}
-                                </Badge>
-                              ))}
+                              {paper.analysis.tags?.map((tag) => {
+                                const { bg, text } = getTagColor(tag);
+                                return (
+                                  <Badge
+                                    key={tag}
+                                    variant="secondary"
+                                    className={`${bg} ${text} border-transparent`}
+                                  >
+                                    {tag}
+                                  </Badge>
+                                );
+                              })}
                             </div>
                           </TableCell>
                           <TableCell>
