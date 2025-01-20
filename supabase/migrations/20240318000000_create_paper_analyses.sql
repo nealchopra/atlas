@@ -28,8 +28,8 @@ drop policy if exists "Enable delete access for users" on public.paper_analyses;
 create policy "Enable all access for authenticated users"
     on public.paper_analyses
     for all
-    using (auth.role() = 'authenticated')
-    with check (auth.role() = 'authenticated');
+    using (auth.role() = 'authenticated' and auth.uid() = user_id)
+    with check (auth.role() = 'authenticated' and auth.uid() = user_id);
 
 -- Grant necessary permissions
 grant usage on schema public to anon, authenticated;
