@@ -78,4 +78,28 @@ export async function getUserPaperAnalyses(userId: string): Promise<PaperAnalysi
         console.error('Unexpected error in getUserPaperAnalyses:', err);
         return [];
     }
+}
+
+export async function updatePaperAnalysisProject(analysisId: string, projectId: string | null): Promise<boolean> {
+    try {
+        const { error } = await supabase
+            .from('paper_analyses')
+            .update({ project_id: projectId })
+            .eq('id', analysisId);
+
+        if (error) {
+            console.error('Error updating paper analysis project:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        console.error('Unexpected error in updatePaperAnalysisProject:', err);
+        return false;
+    }
 } 

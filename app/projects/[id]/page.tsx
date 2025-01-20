@@ -26,16 +26,37 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye } from "lucide-react";
+import { Eye, Trash2, Loader2, FileText } from "lucide-react";
 import useSWR from "swr";
 import { getAuthHeader } from "@/lib/hooks/use-projects";
+import { useState } from "react";
+import { PaperAnalysisModal } from "@/components/paper-analysis-modal";
+import { Paper } from "@/types/paper";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { updatePaperAnalysisProject } from "@/lib/paper-analysis";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaperAnalysis {
   id: string;
   title: string;
   analysis: {
+    tags: string[];
+    summary: string;
+    keyFindings: string[];
+    methodology: string;
+    limitations: string[];
+    futureWork: string[];
+    impact: string;
     authors?: string[];
-    tags?: string[];
   };
   created_at: string;
 }
@@ -59,21 +80,89 @@ const fetcher = async (url: string) => {
       Authorization: authHeader,
     },
   });
-  
+
   if (!res.ok) {
     throw new Error("Failed to fetch");
   }
-  
+
   return res.json();
 };
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
-  const { data: project, error } = useSWR<ProjectWithAnalyses>(
-    `/api/projects/${params.id}`,
-    fetcher
+  const {
+    data: project,
+    error,
+    mutate,
+  } = useSWR<ProjectWithAnalyses>(`/api/projects/${params.id}`, fetcher);
+
+  const [selectedPaper, setSelectedPaper] = useState<PaperAnalysis | null>(
+    null
   );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [paperToDelete, setPaperToDelete] = useState<PaperAnalysis | null>(
+    null
+  );
+  const { toast } = useToast();
 
   const isLoading = !project && !error;
+
+  const handleViewAnalysis = (paper: PaperAnalysis) => {
+    setSelectedPaper(paper);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (paper: PaperAnalysis) => {
+    setPaperToDelete(paper);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!paperToDelete) return;
+
+    try {
+      const success = await updatePaperAnalysisProject(paperToDelete.id, null);
+
+      if (success) {
+        // Update local data
+        mutate({
+          ...project!,
+          paper_analyses: project!.paper_analyses.filter(
+            (p) => p.id !== paperToDelete.id
+          ),
+        });
+
+        toast({
+          title: "Analysis removed",
+          description: "Successfully removed the analysis from this project.",
+        });
+      } else {
+        throw new Error("Failed to remove analysis");
+      }
+    } catch (error) {
+      console.error("Error removing analysis:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove the analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPaperToDelete(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -91,7 +180,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>{project?.title || "Loading..."}</BreadcrumbPage>
+                    <BreadcrumbPage>
+                      {project?.title || "Loading..."}
+                    </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -105,15 +196,29 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                     {project?.title || "Loading..."}
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    {project?.description || "View and manage your literature reviews for this project."}
+                    {project?.description ||
+                      "View and manage your literature reviews for this project."}
                   </p>
                 </div>
-                {isLoading ? (
-                  <p>Loading analyses...</p>
-                ) : error ? (
+                {error ? (
                   <p>Error loading project data</p>
                 ) : project?.paper_analyses?.length === 0 ? (
-                  <p>No analyses yet. Add your first paper analysis to get started.</p>
+                  <div className="border border-dashed border-muted-foreground/20 rounded-lg py-12">
+                    <div className="flex flex-col items-center gap-4 px-4">
+                      <div className="bg-muted/50 p-4 rounded-2xl">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-medium">
+                          No analyses in this project yet!
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Add your first paper analysis to start organizing your
+                          research.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -147,9 +252,25 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button variant="secondary" size="sm">
-                              View analysis
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="View analysis"
+                                onClick={() => handleViewAnalysis(paper)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Delete analysis"
+                                className="text-destructive"
+                                onClick={() => handleDeleteClick(paper)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -161,6 +282,43 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      {selectedPaper && (
+        <PaperAnalysisModal
+          paper={{
+            paperId: selectedPaper.id,
+            title: selectedPaper.title,
+            authors:
+              selectedPaper.analysis.authors?.map((name) => ({ name })) || [],
+            citationCount: 0,
+            year: new Date(selectedPaper.created_at).getFullYear(),
+          }}
+          isOpen={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          analysis={selectedPaper.analysis}
+          isLoading={false}
+          showAddToProject={false}
+        />
+      )}
+      <AlertDialog
+        open={!!paperToDelete}
+        onOpenChange={(open: boolean) => !open && setPaperToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove analysis from project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this analysis from your project?
+              The analysis will still be available in your library.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ProtectedRoute>
   );
 }

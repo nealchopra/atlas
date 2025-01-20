@@ -7,10 +7,25 @@ import {
 } from "@/components/ui/dialog";
 import { Paper } from "@/types/paper";
 import { PaperAnalysis } from "@/lib/openai";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useProjects } from "@/lib/hooks/use-projects";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  updatePaperAnalysisProject,
+  getPaperAnalysis,
+} from "@/lib/paper-analysis";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 // Define tag colors using Tailwind color combinations
 const TAG_COLORS = [
@@ -28,6 +43,7 @@ interface PaperAnalysisModalProps {
   onOpenChange: (open: boolean) => void;
   analysis: PaperAnalysis | null;
   isLoading: boolean;
+  showAddToProject?: boolean;
 }
 
 type AnalysisSectionKey = Exclude<keyof PaperAnalysis, "tags">;
@@ -53,7 +69,34 @@ export function PaperAnalysisModal({
   onOpenChange,
   analysis,
   isLoading,
+  showAddToProject = true,
 }: PaperAnalysisModalProps) {
+  const { projects } = useProjects();
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null
+  );
+  const [updatingProject, setUpdatingProject] = useState(false);
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchAnalysisId = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user?.id || !paper.paperId) return;
+
+      const analysisRecord = await getPaperAnalysis(paper.paperId, user.id);
+      if (analysisRecord) {
+        setAnalysisId(analysisRecord.id);
+        setSelectedProjectId(analysisRecord.project_id);
+      }
+    };
+
+    fetchAnalysisId();
+  }, [paper.paperId]);
+
   const renderContent = (
     section: AnalysisSection,
     content: string | string[]
@@ -68,6 +111,51 @@ export function PaperAnalysisModal({
       );
     }
     return <p className="text-sm text-muted-foreground">{content as string}</p>;
+  };
+
+  const handleProjectClick = async (projectId: string) => {
+    if (!analysisId) {
+      toast({
+        title: "Error",
+        description: "Could not find the analysis record. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setUpdatingProject(true);
+
+      const newProjectId = selectedProjectId === projectId ? null : projectId;
+
+      // Update the database
+      const success = await updatePaperAnalysisProject(
+        analysisId,
+        newProjectId
+      );
+
+      if (success) {
+        setSelectedProjectId(newProjectId);
+        toast({
+          title: newProjectId ? "Added to project" : "Removed from project",
+          description: `Successfully ${
+            newProjectId ? "added to" : "removed from"
+          } the selected project.`,
+        });
+        setIsPopoverOpen(false);
+      } else {
+        throw new Error("Failed to update project");
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update project. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingProject(false);
+    }
   };
 
   return (
@@ -112,16 +200,52 @@ export function PaperAnalysisModal({
         </ScrollArea>
 
         <DialogFooter className="px-6 py-4">
-          <Button variant="outline" className="gap-2">
-            Add to Notion
-            <Image
-              src="/notion.svg"
-              alt="Notion"
-              width={16}
-              height={16}
-              className="opacity-70"
-            />
-          </Button>
+          {showAddToProject !== false && (
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  Add to project
+                  {selectedProjectId && (
+                    <span className="text-indigo-600 text-xs font-normal bg-indigo-500/10 dark:bg-indigo-500/20 rounded-md px-2 py-1">
+                      1
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-60 p-0" align="end">
+                <div className="border-b px-3 py-2">
+                  <p className="text-sm font-medium text-center">
+                    Select a project
+                  </p>
+                </div>
+                <ScrollArea className="h-40">
+                  <div className="p-2">
+                    {projects?.map((project) => {
+                      const isSelected = selectedProjectId === project.id;
+                      return (
+                        <button
+                          key={project.id}
+                          onClick={() => handleProjectClick(project.id)}
+                          disabled={updatingProject}
+                          className={cn(
+                            "relative flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors duration-300 hover:bg-accent hover:text-accent-foreground",
+                            isSelected && "bg-accent/50"
+                          )}
+                        >
+                          <span>{project.title}</span>
+                          {updatingProject && selectedProjectId === project.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : isSelected ? (
+                            <Check className="h-4 w-4" />
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
