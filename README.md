@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Atlas: Research, faster.
 
-## Getting Started
+Atlas is an AI-powered research paper analysis and organization tool that helps researchers streamline their literature review process. It combines paper search capabilities with AI analysis and project organization features to make research more efficient and insightful.
 
-First, run the development server:
+## Features
+
+- **Smart paper search**: Search and retrieve papers via Semantic Scholar API.
+- **AI analysis**: Get instant AI-powered summaries, key findings, and insights.
+- **Project organization**: Create projects to organize related papers and analyses.
+- **Comprehensive analysis**: Each paper analysis includes:
+  - Tags for quick categorization
+  - Concise summary
+  - Key findings and contributions
+  - Methodology overview
+  - Limitations and weaknesses
+  - Future research directions
+  - Field impact assessment
+- **Recent analyses**: Keep track of your recently analyzed papers
+
+## Demo
+
+![Atlas Demo]()
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS, Shadcn UI
+- **Backend**: Supabase (PostgreSQL + Authentication)
+- **AI**: OpenAI GPT-4o-mini
+- **API integration**: Semantic Scholar
+- **State management**: SWR for data fetching
+- **Deployment**: Vercel
+
+## Local development setup
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/atlas.git
+cd atlas
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+   Create a `.env.local` file with the following variables:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+OPENAI_API_KEY=your_openai_api_key
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Learning journey
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Inspiration
 
-## Learn More
+While researching for a class, I found myself spending countless hours manually analyzing research papers and organizing my literature reviews. I wanted to create a tool that would automate the tedious parts of research while maintaining the high quality expected in academic work.
 
-To learn more about Next.js, take a look at the following resources:
+### Potential impact
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Atlas has the potential to:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Save researchers valuable time in literature review
+- Provide more consistent and comprehensive paper analysis
+- Make academic research more accessible to students and early-career researchers
+- Foster better organization and collaboration in research projects
 
-## Deploy on Vercel
+### New technologies
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Next.js App Router in a monorepo**:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   - Server components and streaming
+   - New routing patterns
+   - API route handlers
+   - Monorepo setup
+
+Note: I have used Next.js App Router before, but this was the first time I used it in a monorepo (usually separate frontend and backend).
+
+2. **OpenAI API**:
+   - Prompt engineering for research paper analysis
+   - Handling rate limits and token optimization
+   - Structured output formatting
+
+### Technology Choices
+
+- Chose **Supabase** for its combination of authentication, database, and real-time features.
+- Selected **Next.js 15** for great performance and developer experience with the App Router.
+- Used **Shadcn UI** for its accessible, customizable components that speed up development.
+- Implemented **SWR** for its elegant data fetching and caching capabilities.
+
+### Challenges and Learnings
+
+1. **Complex state management**:
+
+   - Challenge: Managing paper analysis state across multiple components
+   - Solution: Implemented custom hooks and SWR for better state organization
+   - Learning: The importance of proper state architecture in complex applications
+
+2. **Database security**:
+
+   - Challenge: Implementing proper access controls for multi-user environment.
+   - Solution: Carefully designed RLS policies and database structure
+   - Learning: The complexity of securing user data in a collaborative environment
+
+3. **Notion integration pivot**:
+   - Challenge: Originally planned to integrate with Notion for note organization
+   - Solution: Based on user feedback, pivoted to in-app note management instead
+   - Learning: The importance of validating integration assumptions with actual users
