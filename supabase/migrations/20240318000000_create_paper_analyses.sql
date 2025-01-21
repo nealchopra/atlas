@@ -6,6 +6,7 @@ create table public.paper_analyses (
     id uuid default gen_random_uuid() primary key,
     paper_id text not null,
     user_id uuid not null references auth.users(id) on delete cascade,
+    title text not null,
     analysis jsonb not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -27,8 +28,8 @@ drop policy if exists "Enable delete access for users" on public.paper_analyses;
 create policy "Enable all access for authenticated users"
     on public.paper_analyses
     for all
-    using (auth.role() = 'authenticated')
-    with check (auth.role() = 'authenticated');
+    using (auth.role() = 'authenticated' and auth.uid() = user_id)
+    with check (auth.role() = 'authenticated' and auth.uid() = user_id);
 
 -- Grant necessary permissions
 grant usage on schema public to anon, authenticated;

@@ -14,11 +14,11 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build
 
 # misc
 .DS_Store
@@ -31,7 +31,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env*.local
+.env
 
 # vercel
 .vercel
@@ -39,5 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-prisma/migrations/migration_lock.toml
-prisma/migrations/20241223050229_init/migration.sql
+
+# Supabase
+**/supabase/.branches
+**/supabase/.temp

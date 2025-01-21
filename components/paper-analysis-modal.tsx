@@ -7,21 +7,25 @@ import {
 } from "@/components/ui/dialog";
 import { Paper } from "@/types/paper";
 import { PaperAnalysis } from "@/lib/openai";
-import { Loader2, ChevronLeft, Plus, Grid2X2Plus } from "lucide-react";
+import { Loader2, Check, Grid2x2Plus, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { listNotionDatabases, addPaperToDatabase, createNotionDatabase } from "@/lib/notion";
+import { useProjects } from "@/lib/hooks/use-projects";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  updatePaperAnalysisProject,
+  getPaperAnalysis,
+} from "@/lib/paper-analysis";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 // Define tag colors using Tailwind color combinations
 const TAG_COLORS = [
@@ -39,6 +43,7 @@ interface PaperAnalysisModalProps {
   onOpenChange: (open: boolean) => void;
   analysis: PaperAnalysis | null;
   isLoading: boolean;
+  showAddToProject?: boolean;
 }
 
 type AnalysisSectionKey = Exclude<keyof PaperAnalysis, "tags">;
@@ -90,84 +95,33 @@ export function PaperAnalysisModal({
   onOpenChange,
   analysis,
   isLoading,
+  showAddToProject = true,
 }: PaperAnalysisModalProps) {
-  const [view, setView] = useState<ModalView>("analysis");
-  const [databases, setDatabases] = useState<NotionDatabase[]>([]);
-  const [selectedDatabases, setSelectedDatabases] = useState<Set<string>>(new Set());
-  const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
-  const [isAddingToDatabases, setIsAddingToDatabases] = useState(false);
-  const [selectedPageId, setSelectedPageId] = useState<string>("");
+  const { projects } = useProjects();
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null
+  );
+  const [updatingProject, setUpdatingProject] = useState(false);
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (view === "notion") {
-      fetchDatabases();
-    }
-  }, [view]);
+    const fetchAnalysisId = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user?.id || !paper.paperId) return;
 
-  const fetchDatabases = async () => {
-    setIsLoadingDatabases(true);
-    try {
-      const results = await listNotionDatabases();
-      const formattedDatabases = results.map((db: NotionDatabaseResponse) => ({
-        id: db.id,
-        title: db.title[0]?.plain_text || "Untitled",
-        properties: db.properties
-      }));
-      setDatabases(formattedDatabases);
-
-      // Set the first page as selected if we have one
-      if (results.length > 0 && results[0].parent?.page_id) {
-        setSelectedPageId(results[0].parent.page_id);
+      const analysisRecord = await getPaperAnalysis(paper.paperId, user.id);
+      if (analysisRecord) {
+        setAnalysisId(analysisRecord.id);
+        setSelectedProjectId(analysisRecord.project_id);
       }
-    } catch (error) {
-      console.error("Error fetching databases:", error);
-    } finally {
-      setIsLoadingDatabases(false);
-    }
-  };
+    };
 
-  const handleDatabaseSelect = (dbId: string) => {
-    setSelectedDatabases(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(dbId)) {
-        newSet.delete(dbId);
-      } else {
-        newSet.add(dbId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleAddToDatabases = async () => {
-    if (selectedDatabases.size === 0 || !analysis) return;
-
-    setIsAddingToDatabases(true);
-    try {
-      const promises = Array.from(selectedDatabases).map(dbId =>
-        addPaperToDatabase(dbId, paper, analysis)
-      );
-      await Promise.all(promises);
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error adding to databases:", error);
-    } finally {
-      setIsAddingToDatabases(false);
-    }
-  };
-
-  const handleCreateDatabase = async () => {
-    if (!selectedPageId) {
-      console.error("No page selected for creating database");
-      return;
-    }
-
-    try {
-      await createNotionDatabase("Research Papers", selectedPageId);
-      await fetchDatabases();
-    } catch (error) {
-      console.error("Error creating database:", error);
-    }
-  };
+    fetchAnalysisId();
+  }, [paper.paperId]);
 
   const renderContent = (
     section: AnalysisSection,
@@ -185,151 +139,51 @@ export function PaperAnalysisModal({
     return <p className="text-sm text-muted-foreground">{content as string}</p>;
   };
 
-  const AnalysisView = () => (
-    <>
-      <DialogHeader className="px-6 pt-6 pb-4 flex flex-row items-center justify-between">
-        <DialogTitle className="text-xl font-semibold">Analysis</DialogTitle>
-      </DialogHeader>
+  const handleProjectClick = async (projectId: string) => {
+    if (!analysisId) {
+      toast({
+        title: "Error",
+        description: "Could not find the analysis record. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      <ScrollArea className="px-6 h-[600px]">
-        <div className="space-y-6 pb-6">
-          {/* tags */}
-          <div className="flex flex-wrap gap-2">
-            {analysis?.tags.map((tag, index) => {
-              const colorIndex = index % TAG_COLORS.length;
-              const { bg, text } = TAG_COLORS[colorIndex];
-              return (
-                <span
-                  key={tag}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium ${bg} ${text}`}
-                >
-                  {tag}
-                </span>
-              );
-            })}
-          </div>
+    try {
+      setUpdatingProject(true);
 
-          {/* Analysis sections */}
-          {ANALYSIS_SECTIONS.map((section) => (
-            <div key={section.title} className="rounded-xl bg-muted/50 p-4">
-              <h3 className="font-semibold mb-2">{section.title}</h3>
-              {analysis && renderContent(section, analysis[section.key])}
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+      const newProjectId = selectedProjectId === projectId ? null : projectId;
 
-      <DialogFooter className="px-6 py-4">
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => setView("notion")}
-        >
-          Add to Notion
-          <Image
-            src="/notion.svg"
-            alt="Notion"
-            width={16}
-            height={16}
-            className="opacity-70"
-          />
-        </Button>
-      </DialogFooter>
-    </>
-  );
+      // Update the database
+      const success = await updatePaperAnalysisProject(
+        analysisId,
+        newProjectId
+      );
 
-  const NotionView = () => (
-    <>
-      <DialogHeader className="px-6 pt-6 pb-4 flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setView("analysis")}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <DialogTitle className="text-xl font-semibold">
-            Add to Notion
-          </DialogTitle>
-        </div>
-      </DialogHeader>
+      if (success) {
+        setSelectedProjectId(newProjectId);
+        toast({
+          title: newProjectId ? "Added to project" : "Removed from project",
+          description: `Successfully ${
+            newProjectId ? "added to" : "removed from"
+          } the selected project.`,
+        });
+        setIsPopoverOpen(false);
+      } else {
+        throw new Error("Failed to update project");
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update project. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingProject(false);
+    }
+  };
 
-      <ScrollArea className="px-6 h-[600px]">
-        <div className="space-y-6 pb-6">
-          {isLoadingDatabases ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Properties</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {databases.map((db) => (
-                    <TableRow key={db.id}>
-                      <TableCell className="flex items-center justify-center">
-                        <Checkbox 
-                          checked={selectedDatabases.has(db.id)}
-                          onCheckedChange={() => handleDatabaseSelect(db.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{db.title}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {Object.keys(db.properties).join(", ")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Button 
-                className="w-full" 
-                variant="outline"
-                onClick={handleCreateDatabase}
-              >
-                Create a new database
-                <Grid2X2Plus className="h-4 w-4 ml-2" />
-              </Button>
-            </>
-          )}
-        </div>
-      </ScrollArea>
-
-      <DialogFooter className="px-6 py-4">
-        <Button 
-          variant="outline" 
-          className="gap-2"
-          disabled={selectedDatabases.size === 0 || isAddingToDatabases}
-          onClick={handleAddToDatabases}
-        >
-          {isAddingToDatabases ? (
-            <>
-              Adding to databases
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </>
-          ) : (
-            <>
-              Add to selected databases
-              <Image
-                src="/notion.svg"
-                alt="Notion"
-                width={16}
-                height={16}
-                className="opacity-70"
-              />
-            </>
-          )}
-        </Button>
-      </DialogFooter>
-    </>
-  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -354,11 +208,75 @@ export function PaperAnalysisModal({
             <div className="w-full min-w-full shrink-0">
               <AnalysisView />
             </div>
-            <div className="w-full min-w-full shrink-0">
-              <NotionView />
-            </div>
-          </div>
-        ) : null}
+          ) : null}
+        </ScrollArea>
+
+        {/* gradient */}
+        <div className="h-16 -mt-20 relative z-10 pointer-events-none bg-gradient-to-t from-background to-transparent" />
+
+        <DialogFooter className="px-6 py-4">
+          {showAddToProject !== false && (
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  Add to project <Grid2x2Plus className="h-4 w-4 ml-1" />
+                  {selectedProjectId && (
+                    <span className="text-indigo-600 text-xs font-normal bg-indigo-500/10 dark:bg-indigo-500/20 rounded-md px-2 py-1">
+                      1
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-60 p-0" align="end">
+                <div className="border-b px-3 py-2">
+                  <p className="text-sm font-medium text-center">
+                    Select a project
+                  </p>
+                </div>
+                <ScrollArea className="h-40">
+                  <div className="p-2">
+                    {projects?.length === 0 ? (
+                      <div className="flex flex-col items-center gap-2 py-4 px-2">
+                        <div className="bg-muted/50 p-3 rounded-xl">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium">No projects yet</p>
+                          <p className="text-xs text-muted-foreground">
+                            Create your first project to start organizing your research.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      projects?.map((project) => {
+                        const isSelected = selectedProjectId === project.id;
+                        return (
+                          <button
+                            key={project.id}
+                            onClick={() => handleProjectClick(project.id)}
+                            disabled={updatingProject}
+                            className={cn(
+                              "relative flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none transition-colors duration-300 hover:bg-accent hover:text-accent-foreground",
+                              isSelected && "bg-accent/50"
+                            )}
+                          >
+                            <span>{project.title}</span>
+                            {updatingProject &&
+                            selectedProjectId === project.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isSelected ? (
+                              <Check className="h-4 w-4" />
+                            ) : null}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

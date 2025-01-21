@@ -25,9 +25,9 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing and using Atlas (&ldquo;the
-              Service&rdquo;), you agree to be bound by these Terms of Service. If you
-              do not agree to these terms, please do not use the Service.
+              By accessing and using Atlas (&ldquo;the Service&rdquo;), you
+              agree to be bound by these Terms of Service. If you do not agree
+              to these terms, please do not use the Service.
             </p>
           </section>
 
@@ -36,8 +36,8 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p>
-              Atlas provides research paper analysis
-              and organization tools, including but not limited to:
+              Atlas provides research paper analysis and organization tools,
+              including but not limited to:
             </p>
             <ul className="list-disc pl-6 mb-4">
               <li>
@@ -71,9 +71,8 @@ export default function TermsPage() {
             </h2>
             <p>
               The Service and its original content, features, and functionality
-              are owned by Atlas and are protected
-              by international copyright, trademark, and other intellectual
-              property laws.
+              are owned by Atlas and are protected by international copyright,
+              trademark, and other intellectual property laws.
             </p>
           </section>
 
@@ -84,9 +83,7 @@ export default function TermsPage() {
             <p>The Service integrates with third-party services including:</p>
             <ul className="list-disc pl-6 mb-4">
               <li>Semantic Scholar API</li>
-              <li>ArXiv API</li>
               <li>OpenAI API</li>
-              <li>Notion API</li>
             </ul>
             <p>
               Use of these services is subject to their respective terms of
@@ -99,9 +96,9 @@ export default function TermsPage() {
               6. Limitation of Liability
             </h2>
             <p>
-              The Service is provided &ldquo;as is&rdquo; without warranties of any kind. We
-              are not responsible for any errors or omissions in the content or
-              functionality of the Service.
+              The Service is provided &ldquo;as is&rdquo; without warranties of
+              any kind. We are not responsible for any errors or omissions in
+              the content or functionality of the Service.
             </p>
           </section>
 

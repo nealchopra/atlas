@@ -30,7 +30,7 @@ export default function PrivacyPage() {
               <li>Research queries and search history</li>
               <li>Papers you interact with and save</li>
               <li>Notes and annotations you create</li>
-              <li>Research organization data stored in Notion</li>
+              <li>GitHub profile information (username, avatar)</li>
             </ul>
           </section>
 
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-6 mb-4">
               <li>Semantic Scholar API - for paper search and metadata</li>
               <li>OpenAI API - for AI-powered analysis and summaries</li>
-              <li>Notion API - for data organization and storage</li>
+              <li>GitHub API - for authentication</li>
             </ul>
             <p>
               Each service processes your data according to their respective

@@ -40,7 +40,7 @@ export function NavMain({
         {items.map((item) => (
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title} className={item.title === "Find a paper" ? undefined : "text-sidebar-foreground/60 hover:text-sidebar-foreground"}>
+              <SidebarMenuButton asChild tooltip={item.title} className={item.title === "Find a paper" ? undefined : "text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors duration-300"}>
                 <a href={item.url}>
                   <item.icon />
                   <span>{item.title}</span>

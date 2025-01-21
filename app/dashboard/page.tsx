@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PaperCard } from "@/components/paper-card";
 import { searchPapers } from "@/lib/semantic-scholar";
 import { Paper } from "@/types/paper";
@@ -27,10 +27,13 @@ import { PaperAnalysis } from "@/lib/openai";
 import ProtectedRoute from "@/components/protected-route";
 import { supabase } from "@/lib/supabase";
 import { createPaperAnalysis, getPaperAnalysis } from "@/lib/paper-analysis";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function Page() {
-  const [searchText, setSearchText] = useState("");
-  const [hasSearched, setHasSearched] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [searchText, setSearchText] = useState(searchParams.get("q") || "");
+  const [hasSearched, setHasSearched] = useState(!!searchParams.get("q"));
   const [isLoading, setIsLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -43,9 +46,13 @@ export default function Page() {
   const [analysis, setAnalysis] = useState<PaperAnalysis | null>(null);
   const [analyzedPapers, setAnalyzedPapers] = useState<Set<string>>(new Set());
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
         setUserId(session.user.id);
       }
@@ -53,12 +60,26 @@ export default function Page() {
     checkUser();
   }, []);
 
+  // Add auto-resize effect
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.max(120, textarea.scrollHeight)}px`;
+    }
+  }, [searchText]);
+
   const handleSearch = async () => {
     if (!searchText.trim()) return;
 
     setIsLoading(true);
     setError(null);
     setHasSearched(true);
+
+    // Update URL with search query
+    const params = new URLSearchParams();
+    params.set("q", searchText.trim());
+    router.push(`/dashboard?${params.toString()}`);
 
     try {
       const results = await searchPapers(searchText);
@@ -69,7 +90,10 @@ export default function Page() {
         const analyzedSet = new Set<string>();
         await Promise.all(
           results.map(async (paper) => {
-            const existingAnalysis = await getPaperAnalysis(paper.paperId, userId);
+            const existingAnalysis = await getPaperAnalysis(
+              paper.paperId,
+              userId
+            );
             if (existingAnalysis) {
               analyzedSet.add(paper.paperId);
             }
@@ -85,6 +109,14 @@ export default function Page() {
     }
   };
 
+  // Add effect to perform search on initial load if query exists
+  useEffect(() => {
+    const query = searchParams.get("q");
+    if (query) {
+      handleSearch();
+    }
+  }, []); // Run only on mount
+
   const handleAIAnalysis = async (paper: Paper) => {
     if (!userId) return;
 
@@ -96,34 +128,44 @@ export default function Page() {
     try {
       // Check for existing analysis first
       const existingAnalysis = await getPaperAnalysis(paper.paperId, userId);
-      
+
       if (existingAnalysis) {
-        console.log('Found existing analysis:', existingAnalysis);
+        console.log("Found existing analysis:", existingAnalysis);
         setAnalysis(existingAnalysis.analysis);
         setIsAnalysisOpen(true);
       } else {
         // Generate new analysis
         const result = await analyzePaper(paper);
-        
+
+        console.log("Paper data:", {
+          paper_id: paper.paperId,
+          user_id: userId,
+          title: paper.title,
+          authors: paper.authors,
+          analysis: result,
+        });
+
         // Save to database first
         const savedAnalysis = await createPaperAnalysis({
           paper_id: paper.paperId,
           user_id: userId,
+          title: paper.title,
           analysis: result,
+          project_id: null,
         });
 
         if (savedAnalysis) {
-          console.log('Successfully saved analysis:', savedAnalysis);
+          console.log("Successfully saved analysis:", savedAnalysis);
           setAnalysis(result);
           // Update analyzed papers set
-          setAnalyzedPapers(prev => {
+          setAnalyzedPapers((prev) => {
             const newSet = new Set(prev);
             newSet.add(paper.paperId);
             return newSet;
           });
           setIsAnalysisOpen(true);
         } else {
-          throw new Error('Failed to save analysis to database');
+          throw new Error("Failed to save analysis to database");
         }
       }
     } catch (err) {
@@ -168,16 +210,27 @@ export default function Page() {
                 <div className="flex w-full max-w-xl flex-col items-center gap-4">
                   <div className="relative w-full">
                     <Textarea
+                      ref={textareaRef}
                       placeholder="e.g. What are the latest developments in quantum computing's impact on cryptography?"
                       className="min-h-[120px] resize-none text-sm pr-12"
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && e.metaKey) {
+                        if (e.key === "Enter") {
+                          if (e.shiftKey) {
+                            return; // Allow default behavior (new line)
+                          }
+                          e.preventDefault(); // Prevent default enter behavior
                           handleSearch();
                         }
                       }}
                     />
+                    <span className="text-muted-foreground text-xs font-normal bg-muted/50 rounded-md px-2 py-1 absolute bottom-3 left-3">
+                      <span className="font-semibold">Enter</span> to search,{" "}
+                      <span className="font-semibold">Shift + Enter</span> to
+                      add a new line
+                    </span>
+
                     <Button
                       size="icon"
                       variant="secondary"
@@ -241,7 +294,9 @@ export default function Page() {
                           citationCount={paper.citationCount}
                           onAIClick={() => handleAIAnalysis(paper)}
                           isAnalyzing={analyzingPaperId === paper.paperId}
-                          hasExistingAnalysis={analyzedPapers.has(paper.paperId)}
+                          hasExistingAnalysis={analyzedPapers.has(
+                            paper.paperId
+                          )}
                         />
                       ))}
                     </div>
