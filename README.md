@@ -1,6 +1,8 @@
+<img src="/public/atlas-logo.png" alt="Atlas Logo" width="200" />
+
 # Atlas – Research, faster.
 
-Atlas is an AI-powered research paper analysis and organization tool that helps researchers streamline their literature review process. It combines paper search capabilities with AI analysis and project organization features to make research more efficient and insightful. This was built for DALI 2025 application (API developer challenge), by Neal Chopra '28.
+Atlas is an AI-powered research paper analysis and organization tool that helps researchers streamline their literature review process. It combines paper search capabilities with AI analysis and project organization features to make research more efficient and insightful. This was built for DALI 2025 application (API developer challenge), by [Neal Chopra '28](https://nealchopra.com).
 
 ## Features
 
@@ -21,7 +23,7 @@ Atlas is an AI-powered research paper analysis and organization tool that helps 
 
 ![Atlas Demo]()
 
-## Tech Stack
+## Tech stack
 
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
@@ -40,7 +42,7 @@ Atlas is an AI-powered research paper analysis and organization tool that helps 
 - **State management**: SWR for data fetching
 - **Deployment**: Vercel
 
-## Local development setup
+## How to set up locally
 
 1. Clone the repository:
 
@@ -103,14 +105,14 @@ Note: I have used Next.js App Router before, but this was the first time I used 
    - Handling rate limits and token optimization
    - Structured output formatting
 
-### Technology Choices
+### Tech stack choices
 
 - Chose **Supabase** for its combination of authentication, database, and real-time features.
 - Selected **Next.js 15** for great performance and developer experience with the App Router.
 - Used **Shadcn UI** for its accessible, customizable components that speed up development.
 - Implemented **SWR** for its elegant data fetching and caching capabilities.
 
-### Challenges and Learnings
+### Challenges and learnings
 
 1. **Complex state management**:
 
