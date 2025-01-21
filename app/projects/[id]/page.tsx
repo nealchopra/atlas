@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import useSWR from "swr";
 import { getAuthHeader } from "@/lib/hooks/use-projects";
-import { useState, use } from "react";
+import { useState, use, Suspense } from "react";
 import { PaperAnalysisModal } from "@/components/paper-analysis-modal";
 import { Paper } from "@/types/paper";
 import {
@@ -124,12 +124,8 @@ const getTagColor = (tag: string) => {
   return TAG_COLORS[tagColors[tag]];
 };
 
-export default function ProjectPage({
-  params,
-}: {
-  params: Promise<{ id: string }> | { id: string };
-}) {
-  const resolvedParams = use(params as Promise<{ id: string }>);
+function ProjectPageContent({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
   const {
     data: project,
     error,
@@ -388,5 +384,28 @@ export default function ProjectPage({
         </AlertDialogContent>
       </AlertDialog>
     </ProtectedRoute>
+  );
+}
+
+export default function ProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={
+      <ProtectedRoute>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </ProtectedRoute>
+    }>
+      <ProjectPageContent params={params} />
+    </Suspense>
   );
 }

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, Loader2 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { PaperCard } from "@/components/paper-card";
 import { searchPapers } from "@/lib/semantic-scholar";
 import { Paper } from "@/types/paper";
@@ -29,7 +29,7 @@ import { supabase } from "@/lib/supabase";
 import { createPaperAnalysis, getPaperAnalysis } from "@/lib/paper-analysis";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function Page() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchText, setSearchText] = useState(searchParams.get("q") || "");
@@ -318,5 +318,24 @@ export default function Page() {
         )}
       </SidebarProvider>
     </ProtectedRoute>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <ProtectedRoute>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </ProtectedRoute>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
