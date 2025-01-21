@@ -28,8 +28,10 @@ import ProtectedRoute from "@/components/protected-route";
 import { supabase } from "@/lib/supabase";
 import { createPaperAnalysis, getPaperAnalysis } from "@/lib/paper-analysis";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 function DashboardContent() {
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [searchText, setSearchText] = useState(searchParams.get("q") || "");
@@ -103,6 +105,11 @@ function DashboardContent() {
       }
     } catch (err) {
       setError("Failed to search papers. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to search papers. Please try again.",
+      });
       console.error("Search error:", err);
     } finally {
       setIsLoading(false);
@@ -171,6 +178,11 @@ function DashboardContent() {
     } catch (err) {
       console.error("Analysis error:", err);
       setError("Failed to analyze paper. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to analyze paper. Please try again.",
+      });
       setIsAnalysisOpen(false);
     } finally {
       setAnalyzingPaperId(null);
@@ -280,7 +292,7 @@ function DashboardContent() {
                 </div>
 
                 {error ? (
-                  <div className="text-center text-red-500">{error}</div>
+                  null
                 ) : (
                   <div className="mx-auto w-full max-w-5xl">
                     <div className="grid grid-cols-2 gap-4">
