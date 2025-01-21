@@ -63,32 +63,6 @@ const ANALYSIS_SECTIONS: AnalysisSection[] = [
   { title: "Impact", key: "impact", isList: false },
 ];
 
-type ModalView = "analysis" | "notion";
-
-interface NotionDatabase {
-  id: string;
-  title: string;
-  properties: Record<string, any>;
-}
-
-interface NotionDatabaseResponse {
-  id: string;
-  title: Array<{
-    plain_text: string;
-  }>;
-  properties: Record<string, any>;
-  parent?: {
-    page_id?: string;
-  };
-}
-
-interface NotionWorkspace {
-  pages: {
-    id: string;
-    title: string;
-  }[];
-}
-
 export function PaperAnalysisModal({
   paper,
   isOpen,
@@ -184,29 +158,43 @@ export function PaperAnalysisModal({
     }
   };
 
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
-        {isLoading ? (
-          <>
-            <DialogHeader className="px-6 pt-6 pb-4 flex flex-row items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">
-                Analysis
-              </DialogTitle>
-            </DialogHeader>
-            <div className="px-6 h-[600px] flex items-center justify-center">
+      <DialogContent className="max-w-2xl p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 flex flex-row items-center justify-between">
+          <DialogTitle className="text-xl font-semibold">Analysis</DialogTitle>
+        </DialogHeader>
+
+        <ScrollArea className="px-6 h-[600px]">
+          {isLoading ? (
+            <div className="flex h-[400px] items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          </>
-        ) : analysis ? (
-          <div
-            className={`flex transition-transform duration-300 ease-in-out ${
-              view === "notion" ? "-translate-x-full" : "translate-x-0"
-            }`}
-          >
-            <div className="w-full min-w-full shrink-0">
-              <AnalysisView />
+          ) : analysis ? (
+            <div className="space-y-6 pb-6">
+              {/* tags */}
+              <div className="flex flex-wrap gap-2">
+                {analysis.tags.map((tag, index) => {
+                  const colorIndex = index % TAG_COLORS.length;
+                  const { bg, text } = TAG_COLORS[colorIndex];
+                  return (
+                    <span
+                      key={tag}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium ${bg} ${text}`}
+                    >
+                      {tag}
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Analysis sections */}
+              {ANALYSIS_SECTIONS.map((section) => (
+                <div key={section.title} className="rounded-xl bg-muted/50 p-4">
+                  <h3 className="font-semibold mb-2">{section.title}</h3>
+                  {renderContent(section, analysis[section.key])}
+                </div>
+              ))}
             </div>
           ) : null}
         </ScrollArea>
