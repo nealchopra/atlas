@@ -1,6 +1,6 @@
-# Atlas: Research, faster.
+# Atlas – Research, faster.
 
-Atlas is an AI-powered research paper analysis and organization tool that helps researchers streamline their literature review process. It combines paper search capabilities with AI analysis and project organization features to make research more efficient and insightful.
+Atlas is an AI-powered research paper analysis and organization tool that helps researchers streamline their literature review process. It combines paper search capabilities with AI analysis and project organization features to make research more efficient and insightful. This was built for DALI 2025 application (API developer challenge), by Neal Chopra '28.
 
 ## Features
 
@@ -22,6 +22,15 @@ Atlas is an AI-powered research paper analysis and organization tool that helps 
 ![Atlas Demo]()
 
 ## Tech Stack
+
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS, Shadcn UI
