@@ -23,6 +23,10 @@ Atlas is an AI-powered research paper analysis and organization tool that helps 
 
 ## Check out the demo [here](https://screen.studio/share/yGdgc7IE).
 
+<p align="center">
+  <img src="/public/atlas-demo-image.png" alt="Atlas Demo" width="800" style="border-radius: 10px;" />
+</p>
+
 ## Tech stack
 
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
