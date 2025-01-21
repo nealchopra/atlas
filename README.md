@@ -1,4 +1,6 @@
-<img src="/public/atlas-logo.png" alt="Atlas Logo" width="200" />
+<p align="center">
+  <img src="/public/atlas-logo.png" alt="Atlas Logo" width="200" style="border-radius: 10px;" />
+</p>
 
 # Atlas – Research, faster.
 
@@ -42,7 +44,7 @@ Atlas is an AI-powered research paper analysis and organization tool that helps 
 - **State management**: SWR for data fetching
 - **Deployment**: Vercel
 
-## How to set up locally
+## Local development setup
 
 1. Clone the repository:
 
