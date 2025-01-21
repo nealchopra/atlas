@@ -21,9 +21,7 @@ Atlas is an AI-powered research paper analysis and organization tool that helps 
   - Field impact assessment
 - **Recent analyses**: Keep track of your recently analyzed papers
 
-## Demo
-
-![Atlas Demo]()
+## Check out the demo [here](https://screen.studio/share/yGdgc7IE).
 
 ## Tech stack
 
