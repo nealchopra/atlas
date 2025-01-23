@@ -44,6 +44,7 @@ interface PaperAnalysisModalProps {
   analysis: PaperAnalysis | null;
   isLoading: boolean;
   showAddToProject?: boolean;
+  analysisId?: string;
 }
 
 type AnalysisSectionKey = Exclude<keyof PaperAnalysis, "tags">;
@@ -70,18 +71,26 @@ export function PaperAnalysisModal({
   analysis,
   isLoading,
   showAddToProject = true,
+  analysisId: providedAnalysisId,
 }: PaperAnalysisModalProps) {
   const { projects } = useProjects();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
-    null
-  );
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [updatingProject, setUpdatingProject] = useState(false);
-  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [fetchedAnalysisId, setFetchedAnalysisId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Use the provided analysisId if available, otherwise use the fetched one
+  const analysisId = providedAnalysisId || fetchedAnalysisId;
 
   useEffect(() => {
     const fetchAnalysisId = async () => {
+      // Only fetch if we don't have a provided analysisId
+      if (providedAnalysisId) {
+        setSelectedProjectId(null); // Reset selected project for new analysis
+        return;
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -89,13 +98,13 @@ export function PaperAnalysisModal({
 
       const analysisRecord = await getPaperAnalysis(paper.paperId, user.id);
       if (analysisRecord) {
-        setAnalysisId(analysisRecord.id);
+        setFetchedAnalysisId(analysisRecord.id);
         setSelectedProjectId(analysisRecord.project_id);
       }
     };
 
     fetchAnalysisId();
-  }, [paper.paperId]);
+  }, [paper.paperId, providedAnalysisId]);
 
   const renderContent = (
     section: AnalysisSection,

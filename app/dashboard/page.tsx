@@ -47,6 +47,7 @@ function DashboardContent() {
   const [analyzingPaperId, setAnalyzingPaperId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<PaperAnalysis | null>(null);
   const [analyzedPapers, setAnalyzedPapers] = useState<Set<string>>(new Set());
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -131,6 +132,7 @@ function DashboardContent() {
     setAnalyzingPaperId(paper.paperId);
     setAnalysis(null);
     setError(null);
+    setAnalysisId(null);
 
     try {
       // Check for existing analysis first
@@ -139,6 +141,7 @@ function DashboardContent() {
       if (existingAnalysis) {
         console.log("Found existing analysis:", existingAnalysis);
         setAnalysis(existingAnalysis.analysis);
+        setAnalysisId(existingAnalysis.id);
         setIsAnalysisOpen(true);
       } else {
         // Generate new analysis
@@ -164,7 +167,7 @@ function DashboardContent() {
         if (savedAnalysis) {
           console.log("Successfully saved analysis:", savedAnalysis);
           setAnalysis(result);
-          // Update analyzed papers set
+          setAnalysisId(savedAnalysis.id);
           setAnalyzedPapers((prev) => {
             const newSet = new Set(prev);
             newSet.add(paper.paperId);
@@ -326,6 +329,7 @@ function DashboardContent() {
             onOpenChange={setIsAnalysisOpen}
             analysis={analysis}
             isLoading={analyzingPaperId === selectedPaper.paperId}
+            analysisId={analysisId || undefined}
           />
         )}
       </SidebarProvider>
